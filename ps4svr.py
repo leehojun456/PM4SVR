@@ -3,6 +3,7 @@ import os
 import sys
 from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QListWidget, QFileDialog
 from PyQt6.QtCore import QTimer
+from PyQt6.QtCore import QStandardPaths
 
 from controller import AppController  # controller 모듈에 AppController가 정의되어 있다고 가정합니다.
 
@@ -70,31 +71,34 @@ class MainWindow(QMainWindow):
 
     def save_programs_to_file(self):
         try:
-            # 현재 실행 파일의 디렉토리 경로 가져오기
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-
-            # 현재 실행 파일의 디렉토리에 파일 저장하기
             file_name = "saved_programs.txt"
-            file_path = os.path.join(script_dir, file_name)
+
+            # 사용자 AppData 폴더 경로 가져오기
+            documents_dir = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)
+            file_path = os.path.join(documents_dir, file_name)
+
+            # 디렉토리가 존재하지 않으면 생성
+            os.makedirs(documents_dir, exist_ok=True)
 
             # 파일 저장
             with open(file_path, "w") as file:
                 for index in range(self.list_programs.count()):
                     program_path = self.list_programs.item(index).text()
                     file.write(program_path + '\n')
-                    print(f"File saved at: {program_path}")
+                    print(f"Program saved: {program_path}")
 
-                print(f"File saved at: {file_path}")
+            print(f"File successfully saved at: {file_path}")
         except Exception as e:
             print(f"파일 저장 중 오류가 발생했습니다: {e}")
 
     def load_programs_from_file(self):
         # 'saved_programs.txt' 파일에서 저장된 프로그램 목록을 읽어와 목록에 추가합니다.
         try:
-            # 현재 실행 파일의 디렉토리 경로 가져오기
-            script_dir = os.path.dirname(os.path.abspath(__file__))
             file_name = "saved_programs.txt"
-            file_path = os.path.join(script_dir, file_name)
+
+            # 사용자 AppData 폴더 경로 가져오기
+            documents_dir = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)
+            file_path = os.path.join(documents_dir, file_name)
 
             with open(file_path, 'r') as f:
                 program_paths = f.readlines()

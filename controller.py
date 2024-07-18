@@ -3,6 +3,7 @@ import time
 import subprocess
 import psutil
 import os
+from PyQt6.QtCore import QStandardPaths
 
 class AppController:
     def __init__(self):
@@ -16,10 +17,9 @@ class AppController:
         while True:
             # 파일에서 프로그램 목록을 읽어옵니다.
             try:
-                # 현재 실행 파일의 디렉토리 경로 가져오기
-                script_dir = os.path.dirname(os.path.abspath(__file__))
                 file_name = "saved_programs.txt"
-                file_path = os.path.join(script_dir, file_name)
+                documents_dir = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)
+                file_path = os.path.join(documents_dir, file_name)
                 with open(file_path, 'r') as f:
                     program_paths = f.readlines()
                     if is_steamvr_running():
