@@ -64,7 +64,6 @@ class MainWindow(QMainWindow):
             file_paths = file_dialog.selectedFiles()
             for file_path in file_paths:
                 self.list_programs.addItem(file_path)
-                self.app_controller.register_program(file_path)
 
         # 프로그램을 추가한 후 목록을 파일에 저장합니다.
         self.save_programs_to_file()
@@ -102,7 +101,6 @@ class MainWindow(QMainWindow):
                 for path in program_paths:
                     path = path.strip()
                     self.list_programs.addItem(path)
-                    self.app_controller.register_program(path)
         except FileNotFoundError:
             # 파일이 없는 경우 아무 작업도 하지 않습니다.
             pass

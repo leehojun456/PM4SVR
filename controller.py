@@ -42,20 +42,22 @@ class AppController:
 
             time.sleep(1)  # 1초 간격으로 상태 확인
 
-    def register_program(self, program_path):
-        """
-        프로그램을 등록합니다.
-        """
-        if program_path not in self.registered_programs:
-            self.registered_programs.append(program_path)
+
+
 
     def start_registered_programs(self, program_path):
         """
         등록된 프로그램을 실행합니다.
         """
         try:
-            # 프로그램의 디렉토리 경로 추출
+
+            # 이미 실행 중인 프로그램인지 확인
+            for proc in psutil.process_iter(['name']):
+                if os.path.basename(program_path).lower() in proc.info['name'].lower():
+                    return
+            
             program_dir = os.path.dirname(program_path)
+
 
             # 프로그램 실행 전 작업 디렉토리 변경
             current_dir = os.getcwd()
