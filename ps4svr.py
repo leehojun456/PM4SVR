@@ -110,16 +110,10 @@ class MainWindow(QMainWindow):
             pass
 
     def start_all_programs(self):
-        # 현재 등록된 모든 프로그램을 실행합니다.
-        try:
-            with open('saved_programs.txt', 'r') as f:
-                program_paths = f.readlines()
-                for path in program_paths:
-                    path = path.strip()
-                    self.app_controller.start_registered_programs(path)
-        except FileNotFoundError:
-            # 파일이 없는 경우 아무 작업도 하지 않습니다.
-            pass
+        # 현재 목록에 있는 모든 프로그램을 중지합니다.
+        for index in range(self.list_programs.count()):
+            program_path = self.list_programs.item(index).text()
+            self.app_controller.start_registered_programs(program_path)
 
     def stop_all_programs(self):
         # 현재 목록에 있는 모든 프로그램을 중지합니다.
