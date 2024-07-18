@@ -10,7 +10,7 @@ class AppController:
         self.registered_programs = [
             "C:/Users/hppmm/OneDrive/바탕 화면/ShellProtectorOSC1.6/ShellProtectorOSC1.6.exe"
         ]
-        self.check_steamvr_status()
+        #self.check_steamvr_status()
 
 
     def check_steamvr_status(self):
