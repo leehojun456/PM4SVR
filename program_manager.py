@@ -41,6 +41,7 @@ class FileManager:
 class AppController:
     def __init__(self):
         self.is_steamvr_running = False
+        self.is_vrchat_running = False
         self.program_list = FileManager("saved_programs.txt")
 
     def check_steamvr_status(self):
@@ -48,25 +49,33 @@ class AppController:
         SteamVR 프로세스 실행 상태를 주기적으로 확인합니다.
         """
         while True:
-            # 파일에서 프로그램 목록을 읽어옵니다.
-            try:
-                file_name = "saved_programs.txt"
-                documents_dir = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)
-                file_path = os.path.join(documents_dir, file_name)
-                with open(file_path, 'r') as f:
-                    program_paths = f.readlines()
-                    if is_steamvr_running():
-                        if not self.is_steamvr_running:
-                            self.start_all_programs()
-                            self.is_steamvr_running = True
-                    else:
-                        if self.is_steamvr_running:
-                            for path in program_paths:
-                                self.stop_all_programs()
-                            self.is_steamvr_running = False
-            except FileNotFoundError:
-                # 파일이 없는 경우 아무 작업도 하지 않습니다.
-                pass
+            if is_steamvr_running():
+                if not self.is_steamvr_running:
+                    self.start_all_programs()
+                    self.is_steamvr_running = True
+            else:
+                if self.is_steamvr_running:
+                    self.stop_all_programs()
+                    self.is_steamvr_running = False
+
+
+            time.sleep(1)  # 1초 간격으로 상태 확인
+            
+        
+    def check_vrchat_status(self):
+        """
+        VRChat 프로세스 실행 상태를 주기적으로 확인합니다.
+        """
+        while True:
+            if is_steamvr_running():
+                if not self.is_vrchat_running:
+                    self.start_all_programs()
+                    self.is_vrchat_running = True
+            else:
+                if self.is_steamvr_running:
+                    self.stop_all_programs()
+                    self.is_vrchat_running = False
+
 
             time.sleep(1)  # 1초 간격으로 상태 확인
 
@@ -115,20 +124,19 @@ class AppController:
         등록된 프로그램을 종료합니다.
         """
         try:
-            
             if "://" in program_path:
                 # URL 링크의 경우 처리 불가 (추가 로직 필요)
                 print(f"Cannot directly terminate process for URL: {program_path}")
                 return
-            
+
             # 프로그램의 파일 이름 추출
             program_name = os.path.basename(program_path).lower()
 
             # 모든 프로세스 탐색
             for proc in psutil.process_iter(['pid', 'name', 'exe']):
                 try:
-                    # 프로세스 실행 파일 경로와 이름이 일치하는지 확인
-                    if program_name in proc.info['exe'].lower():
+                    exe_path = proc.info['exe']
+                    if exe_path is not None and program_name in exe_path.lower():
                         proc.terminate()  # 프로세스 종료 시도
                         proc.wait()  # 프로세스 종료 대기
                         print(f"{program_name} stopped")

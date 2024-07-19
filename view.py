@@ -1,5 +1,9 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QListWidget, QFileDialog, QMessageBox, QListWidgetItem, QWidget, QHBoxLayout, QCheckBox, QVBoxLayout
+from PyQt6.QtWidgets import (
+    QApplication, QMainWindow, QLabel, QPushButton, QListWidget,
+    QFileDialog, QMessageBox, QListWidgetItem, QWidget, QHBoxLayout,
+    QCheckBox, QVBoxLayout
+)
 from PyQt6.QtCore import QTimer
 from program_manager import AppController
 import threading
@@ -10,14 +14,13 @@ class MainWindow(QMainWindow):
 
         self.app_controller = AppController()
         
-        
         # 스레드를 생성하여 SteamVR 상태를 주기적으로 확인합니다.
         self.thread = threading.Thread(target=self.app_controller.check_steamvr_status)
         self.thread.daemon = True  # 메인 스레드 종료 시 함께 종료되도록 설정
         self.thread.start()
 
         # 창 초기화
-        self.setWindowTitle("SteamVR 상태 확인")
+        self.setWindowTitle("OSC Manager For VRChat")
         self.setGeometry(100, 100, 600, 400)
         self.setFixedSize(600, 400)
 
@@ -40,9 +43,8 @@ class MainWindow(QMainWindow):
         self.hbox_steamvr.addWidget(self.label_vrchat_status)
 
         # SteamVR 실행 중일 때 실행 체크박스
-        self.checkbox_steamvr = QCheckBox("SteamVR 실행 중일 때 실행", self)
+        self.checkbox_steamvr = QCheckBox("SteamVR 상태일 때 실행", self)
         self.hbox_steamvr.addWidget(self.checkbox_steamvr)
-
 
         # 프로그램 리스트
         self.list_programs = QListWidget(self)
@@ -65,21 +67,17 @@ class MainWindow(QMainWindow):
         self.btn_stop_program.clicked.connect(self.app_controller.stop_all_programs)
         self.horizontal_layout.addWidget(self.btn_stop_program)
 
-
         # 파일에서 프로그램 목록을 불러옵니다.
         self.load_programs_from_file()
-
 
         # QTimer를 설정하여 1초마다 SteamVR 상태를 업데이트합니다.
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_status)
         self.timer.start(1000)  # 1초마다 update_status() 메서드를 호출합니다.
         
-        
-    
     def add_item_with_button(self, text):
         # QListWidgetItem 생성
-        item = QListWidgetItem()
+        item = QListWidgetItem(text)  # 텍스트 설정
 
         # 항목 레이아웃 생성
         item_widget = QWidget()
@@ -94,6 +92,10 @@ class MainWindow(QMainWindow):
         delete_button = QPushButton('삭제')
         delete_button.clicked.connect(lambda: self.delete_item(item))
         item_layout.addWidget(delete_button)
+        
+        run_button = QPushButton('실행')
+        run_button.clicked.connect(lambda: self.run_item(item))
+        item_layout.addWidget(run_button)
 
         # 레이아웃을 항목 위젯에 설정
         item_widget.setLayout(item_layout)
@@ -108,12 +110,25 @@ class MainWindow(QMainWindow):
         self.app_controller.remove_programs_to_file(index)
         self.load_programs_from_file()
 
+    def run_item(self, item):
+        # 실행 버튼 클릭 시 항목 실행
+        program_path = item.text()  # item에서 텍스트 데이터 가져오기
+        print(program_path)
+        self.app_controller.start_registered_programs(program_path)
+        self.load_programs_from_file()
+
     def update_status(self):
         # SteamVR 상태에 따라 라벨을 업데이트합니다.
         if self.app_controller.is_steamvr_running:
             self.label_steamvr_status.setText("SteamVR 상태: 실행 중")
         else:
             self.label_steamvr_status.setText("SteamVR 상태: 실행 중이 아님")
+            
+        # VRChat 상태에 따라 라벨을 업데이트합니다.
+        if self.app_controller.is_vrchat_running:
+            self.label_vrchat_status.setText("VRChat 상태: 실행 중")
+        else:
+            self.label_vrchat_status.setText("VRChat 상태: 실행 중이 아님")            
 
     def add_program_dialog(self):
         # 파일 다이얼로그를 통해 프로그램을 추가하고, 추가된 프로그램을 목록에 표시합니다.
@@ -130,12 +145,8 @@ class MainWindow(QMainWindow):
                 if success:
                     self.load_programs_from_file()
                 else:
-                    QMessageBox.critical(self,'Critical Title','This program has already been added.')
+                    QMessageBox.critical(self, 'Critical Title', 'This program has already been added.')
                     
-        
-        
-        
-    
     def load_programs_from_file(self):
         # 'saved_programs.txt' 파일에서 저장된 프로그램 목록을 읽어와 목록에 추가합니다.
         try:
@@ -147,7 +158,6 @@ class MainWindow(QMainWindow):
         except FileNotFoundError:
             # 파일이 없는 경우 아무 작업도 하지 않습니다.
             pass
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
