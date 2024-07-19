@@ -3,6 +3,7 @@ import time
 import subprocess
 import psutil
 import os
+import webbrowser
 from PyQt6.QtCore import QStandardPaths
 
 class FileManager:
@@ -77,14 +78,20 @@ class AppController:
         등록된 프로그램을 실행합니다.
         """
         try:
+            if "://" in program_path:
+                # 프로토콜 링크 처리
+                webbrowser.open(program_path)
+                print(f"Opened {program_path} in web browser")
+                return
 
             # 이미 실행 중인 프로그램인지 확인
+            program_name = os.path.basename(program_path)
             for proc in psutil.process_iter(['name']):
-                if os.path.basename(program_path).lower() in proc.info['name'].lower():
+                if proc.info['name'] == program_name:
+                    print(f"{program_name} is already running.")
                     return
-            
-            program_dir = os.path.dirname(program_path)
 
+            program_dir = os.path.dirname(program_path)
 
             # 프로그램 실행 전 작업 디렉토리 변경
             current_dir = os.getcwd()
@@ -96,33 +103,43 @@ class AppController:
 
             # 작업 디렉토리 복원
             os.chdir(current_dir)
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            print(f"Failed to start {program_path}")
+        except FileNotFoundError:
+            print(f"File not found: {program_path}")
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to start {program_path}: {e}")
+        except Exception as e:
+            print(f"An error occurred while starting {program_path}: {e}")
 
     def stop_registered_programs(self, program_path):
         """
         등록된 프로그램을 종료합니다.
         """
         try:
-            # 프로그램의 디렉토리 경로 추출
-            program_dir = os.path.dirname(program_path)
+            
+            if "://" in program_path:
+                # URL 링크의 경우 처리 불가 (추가 로직 필요)
+                print(f"Cannot directly terminate process for URL: {program_path}")
+                return
+            
+            # 프로그램의 파일 이름 추출
+            program_name = os.path.basename(program_path).lower()
 
-            # 프로그램 실행 전 작업 디렉토리 변경
-            current_dir = os.getcwd()
-            os.chdir(program_dir)
+            # 모든 프로세스 탐색
+            for proc in psutil.process_iter(['pid', 'name', 'exe']):
+                try:
+                    # 프로세스 실행 파일 경로와 이름이 일치하는지 확인
+                    if program_name in proc.info['exe'].lower():
+                        proc.terminate()  # 프로세스 종료 시도
+                        proc.wait()  # 프로세스 종료 대기
+                        print(f"{program_name} stopped")
+                        return
+                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                    continue  # 해당 프로세스가 더 이상 유효하지 않거나 접근이 거부된 경우 무시
 
-            # 프로세스 종료
-            for proc in psutil.process_iter(['name']):
-                if os.path.basename(program_path).lower() in proc.info['name'].lower():
-                    proc.terminate()
-                    print(f"{os.path.basename(program_path)} stopped")
+            print(f"No running process found for {program_path}")
 
-            # 작업 디렉토리 복원
-            os.chdir(current_dir)
-        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-            pass
-
-
+        except Exception as e:
+            print(f"An error occurred while stopping {program_path}: {e}")
 
     #프로그램 리스트 파일 저장
     def save_programs_to_file(self, program_path):

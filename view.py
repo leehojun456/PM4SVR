@@ -1,5 +1,5 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QListWidget, QFileDialog, QMessageBox, QListWidgetItem, QWidget, QHBoxLayout
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QListWidget, QFileDialog, QMessageBox, QListWidgetItem, QWidget, QHBoxLayout, QCheckBox, QVBoxLayout
 from PyQt6.QtCore import QTimer
 from program_manager import AppController
 import threading
@@ -16,26 +16,55 @@ class MainWindow(QMainWindow):
         self.thread.daemon = True  # 메인 스레드 종료 시 함께 종료되도록 설정
         self.thread.start()
 
+        # 창 초기화
         self.setWindowTitle("SteamVR 상태 확인")
         self.setGeometry(100, 100, 600, 400)
+        self.setFixedSize(600, 400)
 
-        self.label = QLabel("SteamVR 상태: 확인 중...", self)
-        self.label.setGeometry(50, 50, 500, 50)
+        self.central_widget = QWidget()
+        self.setCentralWidget(self.central_widget)
 
+        # 메인 레이아웃
+        self.main_layout = QVBoxLayout(self.central_widget)
+
+        # SteamVR 상태 및 체크박스 가로 레이아웃
+        self.hbox_steamvr = QHBoxLayout()
+        self.main_layout.addLayout(self.hbox_steamvr)
+
+        # SteamVR 상태 라벨
+        self.label_steamvr_status = QLabel("SteamVR 상태: 확인 중...", self)
+        self.hbox_steamvr.addWidget(self.label_steamvr_status)
+        
+        # VRChat 실행 상태 라벨
+        self.label_vrchat_status = QLabel("VRChat 실행 상태: 확인 중...", self)
+        self.hbox_steamvr.addWidget(self.label_vrchat_status)
+
+        # SteamVR 실행 중일 때 실행 체크박스
+        self.checkbox_steamvr = QCheckBox("SteamVR 실행 중일 때 실행", self)
+        self.hbox_steamvr.addWidget(self.checkbox_steamvr)
+
+
+        # 프로그램 리스트
+        self.list_programs = QListWidget(self)
+        self.main_layout.addWidget(self.list_programs)
+
+        # 파일 추가 버튼
         self.btn_add_program = QPushButton("프로그램 추가", self)
-        self.btn_add_program.setGeometry(50, 150, 150, 30)
         self.btn_add_program.clicked.connect(self.add_program_dialog)
+        self.main_layout.addWidget(self.btn_add_program)
+
+        # 모든 프로그램 실행 및 중지 버튼을 위한 가로 레이아웃
+        self.horizontal_layout = QHBoxLayout()
+        self.main_layout.addLayout(self.horizontal_layout)
 
         self.btn_start_program = QPushButton("모든 프로그램 시작", self)
-        self.btn_start_program.setGeometry(250, 150, 150, 30)
         self.btn_start_program.clicked.connect(self.app_controller.start_all_programs)
+        self.horizontal_layout.addWidget(self.btn_start_program)
 
         self.btn_stop_program = QPushButton("모든 프로그램 중지", self)
-        self.btn_stop_program.setGeometry(450, 150, 150, 30)
         self.btn_stop_program.clicked.connect(self.app_controller.stop_all_programs)
+        self.horizontal_layout.addWidget(self.btn_stop_program)
 
-        self.list_programs = QListWidget(self)
-        self.list_programs.setGeometry(50, 200, 550, 150)
 
         # 파일에서 프로그램 목록을 불러옵니다.
         self.load_programs_from_file()
@@ -82,9 +111,9 @@ class MainWindow(QMainWindow):
     def update_status(self):
         # SteamVR 상태에 따라 라벨을 업데이트합니다.
         if self.app_controller.is_steamvr_running:
-            self.label.setText("SteamVR 상태: 실행 중")
+            self.label_steamvr_status.setText("SteamVR 상태: 실행 중")
         else:
-            self.label.setText("SteamVR 상태: 실행 중이 아님")
+            self.label_steamvr_status.setText("SteamVR 상태: 실행 중이 아님")
 
     def add_program_dialog(self):
         # 파일 다이얼로그를 통해 프로그램을 추가하고, 추가된 프로그램을 목록에 표시합니다.
