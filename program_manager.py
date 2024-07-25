@@ -51,11 +51,9 @@ class AppController:
         while True:
             if is_steamvr_running():
                 if not self.is_steamvr_running:
-                    self.start_all_programs()
                     self.is_steamvr_running = True
             else:
                 if self.is_steamvr_running:
-                    self.stop_all_programs()
                     self.is_steamvr_running = False
 
 
